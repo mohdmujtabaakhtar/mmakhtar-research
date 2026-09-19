@@ -1,0 +1,40 @@
+# DIVINE configuration.
+# Values marked (paper) are reported in the EACL 2026 paper; the rest are
+# implementation choices for this re-implementation.
+
+features:
+  # One entry per modality: the manifest column, frames to crop/pad to, and
+  # the embedding size of the frozen foundation model that produced it.
+  # Defaults match DeepSeek-VL2-style video tokens and frame-level speech features;
+  # change `dim` to your extractor's output size (e.g. 768 for WavLM/HuBERT base).
+  video: {frames: 16, dim: 768}
+  audio: {frames: 50, dim: 768}
+
+model:
+  refine_dim: 128
+  refine_blocks: 2         # Figure 2 marks the conv block "2x"
+  window_latent_dim: 64
+  shared_dim: 64
+  num_tokens: 8
+  num_diagnosis: 3         # HC, ALS, Stroke (paper)
+  num_severity: 3          # Mild, Moderate, Severe (paper)
+  alpha: 2.0               # (paper)
+  epsilon: 0.1             # (paper)
+  lam: 0.4                 # (paper)
+  beta_shared: 1.0
+  beta_private: 1.0
+  dropout: 0.3
+  modality_dropout: 0.2
+  kl_warmup_steps: 300
+  # ablations (paper Table 5): set one to false
+  use_cycle: true
+  use_sparse: true
+  use_token_loss: true
+
+training:
+  lr: 1.0e-3               # Adam (paper)
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper), with early stopping
+  patience: 15
+  folds: 5                 # subject-wise cross-validation (paper)
+  seeds: [0]               # the paper averages over five seeds: [0, 1, 2, 3, 4]
