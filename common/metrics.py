@@ -6,7 +6,7 @@ so results can be logged or serialised to JSON directly.
 from __future__ import annotations
 
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score, roc_curve
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, roc_curve
 
 
 def accuracy(y_true, y_pred) -> float:
@@ -29,6 +29,22 @@ def rmse(y_true, y_pred) -> float:
     """Root mean squared error."""
     y_true, y_pred = np.asarray(y_true, float), np.asarray(y_pred, float)
     return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+
+
+def auc(y_true, scores) -> float:
+    """Area under the ROC curve in percent (binary; ``scores`` higher = positive)."""
+    return 100.0 * float(roc_auc_score(np.asarray(y_true), np.asarray(scores)))
+
+
+def best_threshold(y_true, scores) -> float:
+    """Decision threshold on ``scores`` that maximises macro-F1 (pick it on validation data)."""
+    y_true, scores = np.asarray(y_true), np.asarray(scores)
+    candidates = np.unique(scores)
+    if len(candidates) > 200:
+        candidates = np.quantile(scores, np.linspace(0, 1, 201))
+    f1s = [f1_score(y_true, (scores >= t).astype(int), average="macro", zero_division=0)
+           for t in candidates]
+    return float(candidates[int(np.argmax(f1s))])
 
 
 def eer(y_true, scores) -> float:

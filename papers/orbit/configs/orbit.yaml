@@ -1,0 +1,34 @@
+# ORBIT configuration. Values marked (paper) are reported in the INTERSPEECH 2026
+# paper; the rest are implementation choices (the paper does not report them).
+
+features:
+  # Paper's best pairs: mHuBERT-147 (768) + Qwen3-Embeddings (1024), Whisper-base (512) + E5-large (1024).
+  audio: {frames: 64, dim: 48}    # e.g. dim: 768 for mHuBERT-147 / wav2vec 2.0, 512 for Whisper-base
+  text: {frames: 32, dim: 48}     # e.g. dim: 768 for mBERT, 1024 for XLM-R / E5 / Qwen3
+
+model:
+  hidden: 256
+  geo_dim: 64
+  num_clusters: 4          # K > 2 (paper)
+  tau: 0.1
+  tau_c: 0.1
+  sphere_radius: 1.0
+  curvature: 1.0
+  margin: 0.5
+  lambda_bgcc: 0.1
+  lambda_adv: 0.1
+  grl_coeff: 1.0
+  dropout: 0.3             # dropout (paper)
+  clip_norm: 1.0
+  cross_attention: true    # Table 2: ORBIT with / without cross-attention
+  use_grl: true            # Table 3: w/o GRL
+  geometries: [sphere, hyperbolic]   # Table 3: [hyperbolic], [sphere], [hyperbolic, euclidean], [sphere, euclidean]
+
+training:
+  lr: 1.0e-3               # AdamW (paper); lr not reported
+  weight_decay: 0.01
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper), with early stopping
+  patience: 10
+  val_fraction: 0.1        # share of training speakers held out for early stopping
+  seeds: [0]

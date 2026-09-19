@@ -1,0 +1,33 @@
+# Small PHOENIX-Mamba for the CPU smoke test (--synthetic). Use phoenix.yaml for real runs.
+
+features:
+  frames: 48        # frames to crop/pad each utterance to
+  dim: 64           # PTM feature size: 768 for WavLM / wav2vec 2.0 / PaSST, 512 for Whisper / x-vector
+
+model:
+  adapter_dim: 64         # smoke test only (paper: 256)
+  hyp_dim: 32             # smoke test only (paper: 128)
+  curvature: 1.0          # kappa = -1 (paper)
+  num_evidence: 4         # M (paper)
+  num_modes: 4            # K (paper)
+  tau: 0.1                # (paper)
+  lam: 1.0                # cluster loss weight (paper)
+  beta: 0.1               # separation loss weight (paper)
+  gamma: 0.05             # entropy weight (paper)
+  clip_norm: 1.0          # tangent feature clipping
+  num_layers: 1
+  d_state: 8
+  dropout: 0.1
+  backbone: mamba         # mamba | bigru | cnn     (Table 5)
+  geometry: hyperbolic    # hyperbolic | euclidean (Table 5, PHOENIX-Euc)
+
+training:
+  lr: 1.0e-3              # smoke test only: few steps on tiny data (paper: 1e-4)
+  weight_decay: 0.01      # (paper)
+  betas: [0.9, 0.999]     # (paper)
+  grad_clip: 1.0          # (paper)
+  epochs: 20              # (paper)
+  batch_size: 32          # (paper)
+  patience: 20            # dev loss picks the checkpoint; no early stop within 20 epochs
+  folds: 5                # only used when the manifest has no `split` column
+  seeds: [0]

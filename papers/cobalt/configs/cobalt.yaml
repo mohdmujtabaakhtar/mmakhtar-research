@@ -1,0 +1,35 @@
+# COBALT configuration. Values marked (paper) are reported in the INTERSPEECH 2026
+# paper; the rest are implementation choices (the paper does not report them).
+
+features:
+  # stream1 / stream2 are the two representations being fused.
+  # Paper's best pair: MFCC frames (40 coefficients) + PaSST (768-d).
+  stream1: {frames: 64, dim: 40}
+  stream2: {frames: 32, dim: 64}   # set dim: 768 for PaSST / WavLM, 512 for Whisper / x-vector
+
+model:
+  adapter_dim: 128
+  num_tokens: 8            # K
+  hyp_dim: 64              # d_h
+  num_prototypes: 32       # M
+  curvature: 1.0
+  tau_q: 0.1
+  tau_w: 1.0
+  bandit_lr: 0.1           # eta
+  reward_alpha: 1.0
+  reward_beta: 1.0
+  beta_vq: 0.25
+  commitment: 0.25
+  lam_entropy: 0.01
+  hidden: 128              # MLP head, e.g. 128 units (paper)
+  dropout: 0.3
+  clip_norm: 1.0
+  geometry: hyperbolic     # hyperbolic | euclidean  (COBALT-E, Table 2)
+  fusion: cobalt           # cobalt | mobius         (Mobius-addition ablation, Table 3)
+
+training:
+  lr: 1.0e-3               # Adam (paper uses Adam; lr not reported)
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper)
+  folds: 5                 # participant-disjoint, 4 folds train / 1 fold test (paper)
+  seeds: [0]

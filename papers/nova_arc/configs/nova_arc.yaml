@@ -1,0 +1,39 @@
+# NOVA-ARC configuration. Values marked (paper) come from Appendix A.2, Table 5.
+# The paper also fine-tunes the SSL encoder (lr 3e-5); this implementation keeps
+# the encoder frozen and trains everything on top of pre-extracted frame features.
+
+features:
+  frames: 32        # frames to crop/pad each utterance to
+  dim: 32           # 768 for voc2vec / WavLM / wav2vec 2.0, 1024 for MMS-1B
+
+model:
+  num_classes: 5          # happy, anger, disgust, sadness, fear (paper)
+  latent_dim: 256         # d (paper)
+  bottleneck_dim: 128     # d_b (paper)
+  curvature: 1.0          # kappa = -1 (paper)
+  codebook_size: 256      # K (paper)
+  commitment: 0.25        # beta (paper)
+  lambda_vq: 1.0          # (paper)
+  alpha_init: 1.0         # HEL exponent, learned (paper)
+  hel_eps: 1.0e-8         # (paper)
+  ot_epsilon: 0.05        # (paper)
+  sinkhorn_iters: 50      # (paper)
+  lambda_opt: 1.0         # (paper)
+  lambda_ot: 1.0          # (paper)
+  clip_norm: 1.0
+  geometry: hyperbolic    # hyperbolic | euclidean            (Table 3)
+  tokens: both            # both | continuous | discrete      (Table 4)
+  fusion: mobius          # mobius | concat                   (Table 4)
+  use_hel: true           #                                   (Table 4)
+  ot_geometry: same       # same | euclidean                  (Table 4)
+  adaptation: ot          # ot | none (source-only)
+
+training:
+  lr: 1.0e-4              # new layers (paper)
+  betas: [0.9, 0.98]      # (paper)
+  weight_decay: 0.01      # (paper)
+  grad_clip: 1.0          # (paper)
+  epochs: 30              # (paper)
+  warmup_frac: 0.1        # 10% warm-up + cosine decay (paper)
+  batch_size: 16          # source and target mini-batches (paper)
+  seeds: [0]

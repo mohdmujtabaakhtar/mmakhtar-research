@@ -12,7 +12,8 @@ A manifest is a CSV file with one row per sample. Required columns:
 * ``subject_id`` - speaker / participant ID, used for subject-wise splits;
 * one column per modality holding the path to its ``.npy`` file
   (column names are chosen in the paper's config, e.g. ``video`` and ``audio``);
-* one column per label (e.g. ``diagnosis`` and ``severity``), integer-coded.
+* one column per label (e.g. ``diagnosis`` and ``severity``), integer-coded or text
+  (text labels such as a ``language`` column are mapped to integers in sorted order).
 
 Relative feature paths are resolved against the manifest's directory.
 """
@@ -55,6 +56,10 @@ class FeatureDataset(Dataset):
         missing = [c for c in ["subject_id", *modalities, *label_columns] if c not in df.columns]
         if missing:
             raise ValueError(f"Manifest {manifest} is missing columns: {missing}")
+        # Text-valued label columns get one integer code per value, fixed over the
+        # whole manifest so that codes agree across cross-validation folds.
+        self.label_maps = {c: {v: i for i, v in enumerate(sorted(df[c].astype(str).unique()))}
+                           for c in label_columns if not pd.api.types.is_numeric_dtype(df[c])}
         self.df = df.iloc[indices].reset_index(drop=True) if indices is not None else df
         self.modalities = modalities
         self.label_columns = label_columns
@@ -71,16 +76,18 @@ class FeatureDataset(Dataset):
         item = {m: torch.from_numpy(fix_length(self._load(row[m]), n))
                 for m, n in self.modalities.items()}
         for col in self.label_columns:
-            item[col] = torch.tensor(int(row[col]), dtype=torch.long)
+            value = self.label_maps[col][str(row[col])] if col in self.label_maps else int(row[col])
+            item[col] = torch.tensor(value, dtype=torch.long)
         return item
 
 
-def subject_kfold(subject_ids, k: int = 5, seed: int = 0):
-    """Subject-wise k-fold splits with a held-out validation fold.
+def subject_kfold(subject_ids, k: int = 5, seed: int = 0, val: bool = True):
+    """Subject-wise k-fold splits, optionally with a held-out validation fold.
 
     Yields ``(train_idx, val_idx, test_idx)`` for each of the ``k`` runs. Fold ``i``
-    is the test set, fold ``(i + 1) % k`` the validation set and the rest train,
-    so no participant ever appears in more than one split of a run.
+    is the test set; with ``val=True`` fold ``(i + 1) % k`` is the validation set,
+    otherwise ``val_idx`` is empty and the other ``k - 1`` folds train. No
+    participant ever appears in more than one split of a run.
     """
     subject_ids = np.asarray(subject_ids)
     subjects = np.unique(subject_ids)
@@ -90,11 +97,11 @@ def subject_kfold(subject_ids, k: int = 5, seed: int = 0):
     rng.shuffle(subjects)
     folds = np.array_split(subjects, k)
     for i in range(k):
-        test_s, val_s = set(folds[i]), set(folds[(i + 1) % k])
+        test_s, val_s = set(folds[i]), set(folds[(i + 1) % k]) if val else set()
         test = [j for j, s in enumerate(subject_ids) if s in test_s]
-        val = [j for j, s in enumerate(subject_ids) if s in val_s]
+        val_idx = [j for j, s in enumerate(subject_ids) if s in val_s]
         train = [j for j, s in enumerate(subject_ids) if s not in test_s | val_s]
-        yield train, val, test
+        yield train, val_idx, test
 
 
 def make_synthetic_manifest(out_dir: str | Path, modalities: dict[str, tuple[int, int]],

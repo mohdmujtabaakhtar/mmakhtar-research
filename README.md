@@ -20,22 +20,25 @@ All papers share one pipeline: **frozen foundation-model features → a light, t
 
 ## Papers
 
-**Code status.** ✅ **Reference implementation**: re-implemented from the paper, tested and runnable end to end. 🗓 **Planned**: paper summary and citation only for now. The reference implementations are clean re-implementations written from each paper's method section, **not the original experimental code**. Each paper's README lists every detail the paper left open and the choice made for it.
+**Code status:** 5 of 16 papers have code so far, and more are being added.
+
+✅ **Reference implementation**: re-implemented from the paper, tested and runnable end to end. 🗓 **Planned**: paper summary and citation only for now. The reference implementations are clean re-implementations written from each paper's method section, **not the original experimental code**. Each paper's README lists every detail the paper left open and the choice made for it.
 
 ### 🩺 Clinical speech AI
 
 | Paper | Venue | Links | Code |
 |---|---|---|---|
 | **DIVINE:** Coordinating Multimodal Disentangled Representations for Oro-Facial Neurological Disorder Assessment<br><sub>**M. M. Akhtar\***, Girish\*, M. Singh</sub> | **EACL 2026** Main<br>🏆 Social Impact Award | [Paper](https://aclanthology.org/2026.eacl-long.248/) | ✅ [`papers/divine`](papers/divine) |
-| **ORBIT:** Synergizing Zero-Shot Cross-Lingual Alzheimer Detection with Language-Invariant Multimodal Bi-Geometric Adversarial Learning<br><sub>Girish\*, **M. M. Akhtar\***, F. Sheth\*, M. Singh, J. Gerard, P. McClean, K. Wong-Lin</sub> | **INTERSPEECH 2026**<br>Oral | [arXiv](https://arxiv.org/abs/2606.17254) | 🗓 |
-| **COBALT:** From Signals to Patterns: Non-Invasive Tuberculosis Detection from Cough Audio using Bandit Weighted Hyperbolic Prototypes<br><sub>**M. M. Akhtar\***, Girish\*, S. Wadhwa, M. Singh, N. Ma</sub> | **INTERSPEECH 2026**<br>Oral | [arXiv](https://arxiv.org/abs/2606.17337) | 🗓 |
-| **HCFD:** A Benchmark for Audio Deepfake Detection in Healthcare<br><sub>**M. M. Akhtar\***, Girish\*, M. Singh</sub> | **ACL 2026** Findings | [Paper](https://aclanthology.org/2026.findings-acl.1739/) | 🗓 |
+| **ORBIT:** Synergizing Zero-Shot Cross-Lingual Alzheimer Detection with Language-Invariant Multimodal Bi-Geometric Adversarial Learning<br><sub>Girish\*, **M. M. Akhtar\***, F. Sheth\*, M. Singh, J. Gerard, P. McClean, K. Wong-Lin</sub> | **INTERSPEECH 2026**<br>Oral | [arXiv](https://arxiv.org/abs/2606.17254) | ✅ [`papers/orbit`](papers/orbit) |
+| **COBALT:** From Signals to Patterns: Non-Invasive Tuberculosis Detection from Cough Audio using Bandit Weighted Hyperbolic Prototypes<br><sub>**M. M. Akhtar\***, Girish\*, S. Wadhwa, M. Singh, N. Ma</sub> | **INTERSPEECH 2026**<br>Oral | [arXiv](https://arxiv.org/abs/2606.17337) | ✅ [`papers/cobalt`](papers/cobalt) |
+| **HCFD:** A Benchmark for Audio Deepfake Detection in Healthcare (**PHOENIX-Mamba**)<br><sub>**M. M. Akhtar\***, Girish\*, M. Singh</sub> | **ACL 2026** Findings | [Paper](https://aclanthology.org/2026.findings-acl.1739/) · [Project page](https://helixometry.github.io/HCFD/) | ✅ [`papers/hcfd`](papers/hcfd) |
 
 ### 🔍 Synthetic-speech detection and source attribution
 
 | Paper | Venue | Links | Code |
 |---|---|---|---|
-| **Indic-CodecFake meets SATYAM:** Towards Detecting Neural Audio Codec Synthesized Speech Deepfakes in Indic Languages<br><sub>Girish\*, **M. M. Akhtar\***, O. C. Phukan, A. B. Buduru</sub> | **ACL 2026** Findings | [Paper](https://aclanthology.org/2026.findings-acl.2159/) | 🗓 |
+| **Indic-CodecFake meets SATYAM:** Towards Detecting Neural Audio Codec Synthesized Speech Deepfakes in Indic Languages<br><sub>Girish\*, **M. M. Akhtar\***, O. C. Phukan, A. B. Buduru</sub> | **ACL 2026** Findings | [Paper](https://aclanthology.org/2026.findings-acl.2159/) · [Project page](https://helixometry.github.io/IndicFake/) | 🗓 |
+| **GARUDA:** Bridging the SEA Gap: An Initial Benchmark for Neural Audio Codec-Synthesized Speech Deepfakes in South-East Asian Languages<br><sub>O. C. Phukan\*, Girish\*, **M. M. Akhtar\***, A. B. Buduru</sub> | **IJCAI 2026** | [arXiv](https://arxiv.org/abs/2606.15968) · [Project page](https://helixometry.github.io/SEACodecFake/) | 🗓 |
 | **SIGNAL:** Bridging Attribution and Open-Set Detection using Graph-Augmented Instance Learning in Synthetic Speech<br><sub>**M. M. Akhtar\***, Girish\*, F. Sheth\*, M. Singh</sub> | **EACL 2026** Main | [Paper](https://aclanthology.org/2026.eacl-long.250/) | 🗓 |
 | **RHYME:** Curved Worlds, Clear Boundaries: Generalizing Speech Deepfake Detection using Hyperbolic and Spherical Geometry Spaces<br><sub>F. Sheth\*, Girish\*, **M. M. Akhtar\***, M. Singh</sub> | **IJCNLP-AACL 2025** Main | [Paper](https://aclanthology.org/2025.ijcnlp-long.104/) | 🗓 |
 | **MiCuNet:** Towards Attribution of Generators and Emotional Manipulation in Cross-Lingual Synthetic Speech using Geometric Learning<br><sub>Girish\*, **M. M. Akhtar\***, F. Sheth\*, M. Singh</sub> | **IJCNLP-AACL 2025** Findings | [Paper](https://aclanthology.org/2025.findings-ijcnlp.37/) | 🗓 |
@@ -46,7 +49,7 @@ All papers share one pipeline: **frozen foundation-model features → a light, t
 
 | Paper | Venue | Links | Code |
 |---|---|---|---|
-| **NOVA-ARC:** Prosody as Supervision: Bridging the Non-Verbal–Verbal for Multilingual Speech Emotion Recognition<br><sub>Girish\*, **M. M. Akhtar\***, M. Singh</sub> | **ACL 2026** Main | [Paper](https://aclanthology.org/2026.acl-long.1940/) | 🗓 |
+| **NOVA-ARC:** Prosody as Supervision: Bridging the Non-Verbal–Verbal for Multilingual Speech Emotion Recognition<br><sub>Girish\*, **M. M. Akhtar\***, M. Singh</sub> | **ACL 2026** Main | [Paper](https://aclanthology.org/2026.acl-long.1940/) | ✅ [`papers/nova_arc`](papers/nova_arc) |
 | **PARROT:** Synergizing Mamba and Attention-based SSL Pre-Trained Models via Parallel Branch Hadamard Optimal Transport for Speech Emotion Recognition<br><sub>O. C. Phukan\*, **M. M. Akhtar\***, Girish\*, S. R. Behera, J. S. K. Patibandla, A. B. Buduru, R. Sharma</sub> | **INTERSPEECH 2025** | [arXiv](https://arxiv.org/abs/2506.01138) | 🗓 |
 | Strong Alone, Stronger Together: Synergizing Modality-Binding Foundation Models with Optimal Transport for Non-Verbal Emotion Recognition<br><sub>O. C. Phukan, **M. M. Akhtar\***, Girish\*, S. R. Behera, S. Kalita, A. B. Buduru, R. Sharma, S. R. M. Prasanna</sub> | **ICASSP 2025** | [Paper](https://ieeexplore.ieee.org/abstract/document/10889257) | 🗓 |
 | **RENO:** Are Mamba-Based Audio Foundation Models the Best Fit for Non-Verbal Emotion Recognition?<br><sub>**M. M. Akhtar\***, O. C. Phukan\*, Girish\*, S. R. Behera, A. C. Nayak, S. K. Nayak, A. B. Buduru, R. Sharma</sub> | **EUSIPCO 2025** | [arXiv](https://arxiv.org/abs/2506.02258) | 🗓 |
@@ -64,17 +67,29 @@ All papers share one pipeline: **frozen foundation-model features → a light, t
 ```
 mmakhtar-research/
 ├── common/                  shared code used by every paper
-│   ├── features/            frozen feature extraction: speech (WavLM, wav2vec 2.0, HuBERT,
-│   │                        Whisper, x-vector, TRILLsson) and video (VideoMAE, VideoMAE V2, ViViT)
-│   ├── data.py              manifest-based datasets, subject-wise k-fold splits, synthetic data
+│   ├── features/            frozen feature extraction
+│   │   ├── speech.py        WavLM, wav2vec 2.0, HuBERT, Whisper, voc2vec, mHuBERT-147, MMS, XLS-R,
+│   │   │                    x-vector, TRILLsson, PaSST
+│   │   ├── video.py         VideoMAE, VideoMAE V2, ViViT
+│   │   ├── text.py          mBERT, XLM-R, multilingual E5, Qwen3-Embedding
+│   │   └── spectral.py      MFCC and LFCC
+│   ├── geometry.py          Poincaré ball, hypersphere and Euclidean manifolds; Fréchet mean
+│   ├── ot.py                Sinkhorn optimal transport, gradient reversal
+│   ├── mamba.py             dependency-free Mamba (selective state-space) block
+│   ├── layers.py            conv adapters, attention pooling
 │   ├── baselines.py         FCN / CNN probes and concatenation fusion used as baselines
-│   ├── geometry.py          Poincaré-ball and hypersphere operations
-│   ├── losses.py            KL, reparameterisation, sparsity
-│   ├── metrics.py           accuracy, macro-F1, MAE, RMSE, EER
-│   └── training.py          training loop with early stopping
-├── papers/
-│   └── divine/              one folder per paper: model, training script, config, README
+│   ├── data.py              manifest-based datasets, subject-wise k-fold splits
+│   ├── training.py          training loop, AdamW + warm-up/cosine, early stopping
+│   ├── config.py            YAML configs with command-line overrides (--set key=value)
+│   ├── losses.py, metrics.py
+├── papers/                  one folder per paper: model, training script, configs, README
+│   ├── divine/              DIVINE (EACL 2026)
+│   ├── nova_arc/            NOVA-ARC (ACL 2026)
+│   ├── orbit/               ORBIT (INTERSPEECH 2026)
+│   ├── cobalt/              COBALT (INTERSPEECH 2026)
+│   └── hcfd/                PHOENIX-Mamba (ACL 2026 Findings)
 ├── tests/                   unit tests (run on every push)
+├── assets/                  architecture figures
 ├── CITATION.bib             BibTeX for all papers above
 └── requirements.txt
 ```
@@ -86,9 +101,18 @@ git clone https://github.com/mohdmujtabaakhtar/mmakhtar-research.git
 cd mmakhtar-research
 pip install -r requirements.txt
 
-pytest                                         # unit tests, ~10 s on CPU
-python -m papers.divine.train --synthetic      # end-to-end smoke test, no downloads
+pytest                                         # unit tests, ~20 s on CPU
+
+# end-to-end smoke tests on generated data (no downloads, 30 s to 3 min each on CPU)
+python -m papers.divine.train   --synthetic
+python -m papers.nova_arc.train --synthetic
+python -m papers.orbit.train    --synthetic
+python -m papers.cobalt.train   --synthetic
+python -m papers.hcfd.train     --synthetic
 ```
+
+Every paper's model has switches for the ablations in its paper, e.g.
+`--set model.geometry=euclidean`.
 
 Each paper's README explains how to extract features for its dataset, the manifest format and how to train and evaluate.
 

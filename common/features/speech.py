@@ -7,8 +7,8 @@ Usage (one .npy per input file, shape (frames, dim)):
 
 ``--inputs`` is a text file with one audio path per line. Audio is loaded as
 mono and resampled to 16 kHz. Models load from the Hugging Face Hub on first
-use; x-vector needs ``speechbrain`` and TRILLsson needs ``tensorflow`` and
-``tensorflow_hub`` (both optional dependencies).
+use; x-vector needs ``speechbrain``, TRILLsson needs ``tensorflow`` and
+``tensorflow_hub``, and PaSST needs ``hear21passt`` (all optional dependencies).
 """
 from __future__ import annotations
 
@@ -25,6 +25,10 @@ HF_MODELS = {
     "wav2vec2": "facebook/wav2vec2-base",
     "hubert": "facebook/hubert-base-ls960",
     "whisper": "openai/whisper-base",
+    "voc2vec": "alkiskoudounas/voc2vec",          # non-verbal vocalisations (NOVA-ARC)
+    "mhubert": "utter-project/mHuBERT-147",       # multilingual HuBERT (ORBIT)
+    "mms": "facebook/mms-1b",                     # (NOVA-ARC, ORBIT)
+    "xlsr": "facebook/wav2vec2-xls-r-1b",         # (ORBIT)
 }
 TRILLSSON_URL = "https://tfhub.dev/google/trillsson3/1"
 XVECTOR_SOURCE = "speechbrain/spkrec-xvect-voxceleb"
@@ -53,17 +57,25 @@ class SpeechExtractor:
             from speechbrain.inference.speaker import EncoderClassifier
             self.model = EncoderClassifier.from_hparams(source=XVECTOR_SOURCE,
                                                         run_opts={"device": str(self.device)})
+        elif name == "passt":
+            from hear21passt.base import get_basic_model
+            self.model = get_basic_model(mode="embed_only").to(self.device).eval()
         elif name == "trillsson":
             import tensorflow_hub as hub
             self.model = hub.KerasLayer(TRILLSSON_URL)
         else:
             raise ValueError(f"Unknown model '{name}'. Choose from "
-                             f"{sorted([*HF_MODELS, 'xvector', 'trillsson'])}")
+                             f"{sorted([*HF_MODELS, 'xvector', 'trillsson', 'passt'])}")
 
     @torch.no_grad()
     def __call__(self, wav: np.ndarray) -> np.ndarray:
         if self.name == "trillsson":  # utterance-level embedding
             return np.asarray(self.model(wav[None, :])["embedding"])
+        if self.name == "passt":  # utterance-level embedding; PaSST expects 32 kHz audio
+            import librosa
+            wav32 = librosa.resample(wav, orig_sr=SAMPLE_RATE, target_sr=32_000)
+            emb = self.model(torch.from_numpy(wav32)[None].to(self.device))
+            return emb.reshape(1, -1).cpu().numpy()
         if self.name == "xvector":  # utterance-level embedding
             emb = self.model.encode_batch(torch.from_numpy(wav)[None].to(self.device))
             return emb.squeeze(0).cpu().numpy()
