@@ -25,3 +25,14 @@ jobs:
           python -m papers.orbit.train    --synthetic --epochs 3 --out results/orbit.json
           python -m papers.cobalt.train   --synthetic --epochs 3 --out results/cobalt.json
           python -m papers.hcfd.train     --synthetic --epochs 3 --out results/hcfd.json
+          python -m papers.satyam.train   --synthetic --epochs 3 --out results/satyam.json
+          python -m papers.garuda.train   --synthetic --epochs 3 --out results/garuda.json
+          python -m papers.signal.train   --synthetic --epochs 3 --out results/signal.json
+          python -m papers.rhyme.train    --synthetic --epochs 3 --out results/rhyme.json
+          python -m papers.micunet.train  --synthetic --epochs 3 --out results/micunet.json
+          python -m papers.coffe.train    --synthetic --epochs 3 --out results/coffe.json
+          python -m papers.trio.train     --synthetic --epochs 3 --out results/trio.json
+          python -m papers.parrot.train   --synthetic --epochs 3 --out results/parrot.json
+          python -m papers.mata.train     --synthetic --epochs 3 --out results/mata.json
+          python -m papers.reno.train     --synthetic --epochs 3 --out results/reno.json
+          python -m papers.snifr.train    --synthetic --epochs 3 --out results/snifr.json
