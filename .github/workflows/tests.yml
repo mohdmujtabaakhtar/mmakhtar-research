@@ -15,8 +15,13 @@ jobs:
       - name: Install core dependencies (CPU)
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install numpy pandas scikit-learn pyyaml pytest
+          pip install numpy pandas scipy scikit-learn pyyaml pytest librosa
       - name: Unit tests
         run: pytest -q
-      - name: End-to-end smoke test
-        run: python -m papers.divine.train --synthetic --epochs 5 --out results/ci.json
+      - name: End-to-end smoke tests
+        run: |
+          python -m papers.divine.train   --synthetic --epochs 3 --out results/divine.json
+          python -m papers.nova_arc.train --synthetic --epochs 3 --out results/nova_arc.json
+          python -m papers.orbit.train    --synthetic --epochs 3 --out results/orbit.json
+          python -m papers.cobalt.train   --synthetic --epochs 3 --out results/cobalt.json
+          python -m papers.hcfd.train     --synthetic --epochs 3 --out results/hcfd.json
