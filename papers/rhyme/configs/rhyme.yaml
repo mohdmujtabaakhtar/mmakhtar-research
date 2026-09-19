@@ -1,0 +1,28 @@
+# RHYME configuration. Values marked (paper) follow the IJCNLP-AACL 2025 paper.
+
+features:
+  dim: 768                 # USAD / PaSST / WavLM / wav2vec 2.0 / HuBERT / Whisper-base: 768; x-vector: 512
+  frames: 200              # frame-level sequence length (crop / pad)
+
+model:
+  conv_channels: [256, 128]   # Phi_1D; d = 128
+  kernel: 3
+  hidden: 128                 # classifier dense layer
+  num_classes: 2
+  curvature: 1.0              # initial c, learned end to end (paper)
+  sphere_radius: 0.9
+  gating: learned             # learned | fixed           (Table 3: "No gating (alpha = 0.5)")
+  branches: both              # both | hyperbolic | spherical   (Table 3: "No spherical" / "No hyperbolic")
+  fusion: riemannian          # riemannian | euclidean    (Table 3: "Euclidean fusion")
+  dropout: 0.3
+
+training:
+  lr: 1.0e-3               # Adam (paper)
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper)
+  patience: 10
+  folds: 5                 # within-dataset CV (paper)
+
+synthetic:
+  dim: 64
+  frames: 20

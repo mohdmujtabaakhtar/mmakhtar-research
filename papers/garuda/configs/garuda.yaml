@@ -1,0 +1,42 @@
+# GARUDA configuration (projection module only; LM frozen). Values marked (paper)
+# follow the IJCAI 2026 paper.
+
+features:
+  whisper: {dim: 512}      # Whisper-base encoder, average-pooled (paper)
+  xvector: {dim: 512}      # x-vector, average-pooled (paper)
+
+num_classes: 2             # answers "real" / "fake"
+
+model:
+  conv_filters: 32         # Conv1d (k=3) + max-pool (paper)
+  align_dim: 0             # JS on the flattened features (equal sizes for Whisper-base / x-vector)
+  hidden: 90               # fully connected layer of 90 neurons (paper)
+  num_prefix: 4
+  tau: 0.5                 # (paper)
+  lam: 0.4                 # (paper)
+  fusion: garuda           # garuda | concat
+  align: js                # js | kl
+  dropout: 0.1
+
+lm:
+  backbone: Qwen/Qwen2-0.5B   # (paper)
+  dtype: float32
+  lora_rank: 0                # 0 = frozen decoder (GARUDA)
+
+training:
+  protocol: official       # train / validation / test splits (paper)
+  optimizer: adamw         # (paper)
+  lr: 1.0e-4               # (paper)
+  batch_size: 32           # (paper)
+  epochs: 5                # (paper)
+  patience: 5
+
+synthetic:
+  n_subjects: 60
+  per_subject: 8
+  dims: {whisper: 128, xvector: 128}
+  overrides:
+    lm.backbone: toy       # tiny offline causal LM instead of Qwen2 ...
+    lm.lora_rank: 8        # ... which has no pretrained knowledge, so the smoke test adds LoRA adapters
+    training.lr: 1.0e-3
+    training.epochs: 20

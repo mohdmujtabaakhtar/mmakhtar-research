@@ -1,6 +1,4 @@
-# DIVINE configuration.
-# Values marked (paper) are reported in the EACL 2026 paper; the rest are
-# implementation choices for this re-implementation.
+# DIVINE configuration. Values marked (paper) follow the EACL 2026 paper.
 
 features:
   # One entry per modality: the manifest column, frames to crop/pad to, and

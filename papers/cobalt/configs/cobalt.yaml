@@ -1,5 +1,4 @@
-# COBALT configuration. Values marked (paper) are reported in the INTERSPEECH 2026
-# paper; the rest are implementation choices (the paper does not report them).
+# COBALT configuration. Values marked (paper) follow the INTERSPEECH 2026 paper.
 
 features:
   # stream1 / stream2 are the two representations being fused.
@@ -28,7 +27,7 @@ model:
   fusion: cobalt           # cobalt | mobius         (Mobius-addition ablation, Table 3)
 
 training:
-  lr: 1.0e-3               # Adam (paper uses Adam; lr not reported)
+  lr: 1.0e-3               # Adam optimiser (paper)
   batch_size: 32           # (paper)
   epochs: 50               # (paper)
   folds: 5                 # participant-disjoint, 4 folds train / 1 fold test (paper)

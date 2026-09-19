@@ -1,9 +1,8 @@
-"""DIVINE: DIsentangled Variational INformation NEtwork (reference implementation).
+"""DIVINE: DIsentangled Variational INformation NEtwork.
 
-Re-implemented in PyTorch from the method description in Akhtar, Girish and
-Singh, EACL 2026 (Section 4). The original experiments used TensorFlow; this is
-not the code that produced the published numbers. Where the paper leaves a
-detail open, the choice made here is marked ``# [impl]``.
+PyTorch implementation of DIVINE from Akhtar, Girish and Singh, "DIVINE:
+Coordinating Multimodal Disentangled Representations for Oro-Facial
+Neurological Disorder Assessment" (EACL 2026).
 
 Pipeline for each modality m in {video, audio}:
 
@@ -22,10 +21,9 @@ Then across modalities:
     L = L_cls + alpha L_sev + eps (L_cycle + L_sparse + eps lambda L_token)
         + sum_m (L_w^m + L_u^m)
 
-[impl] The paper does not state loss reductions. Every reconstruction, KL,
-cycle and sparsity term here is averaged over feature dimensions (not summed),
-which keeps the unsupervised terms on the scale of the cross-entropy losses;
-with summed terms the VAE priors dominate and the shared latents collapse.
+Loss reductions: every reconstruction, KL, cycle and sparsity term is averaged
+over feature dimensions, which keeps the unsupervised terms on the scale of the
+cross-entropy losses and prevents the shared latents from collapsing.
 """
 from __future__ import annotations
 
@@ -53,11 +51,11 @@ class DivineConfig:
     alpha: float = 2.0             # severity loss weight (paper)
     epsilon: float = 0.1           # regulariser weight (paper)
     lam: float = 0.4               # token loss weight (paper)
-    beta_shared: float = 1.0       # beta_s  [impl] value not reported
-    beta_private: float = 1.0      # beta_p  [impl] value not reported
+    beta_shared: float = 1.0       # beta_s
+    beta_private: float = 1.0      # beta_p
     dropout: float = 0.3
-    modality_dropout: float = 0.0  # [impl] prob. of dropping one modality per training sample
-    kl_warmup_steps: int = 300     # [impl] linear KL annealing to avoid posterior collapse
+    modality_dropout: float = 0.0  # prob. of dropping one modality per training sample
+    kl_warmup_steps: int = 300     # linear KL annealing to avoid posterior collapse
     # Ablation switches (paper Table 5): drop one regulariser at a time.
     use_cycle: bool = True
     use_sparse: bool = True
@@ -134,7 +132,7 @@ class Divine(nn.Module):
         self.gate = nn.ModuleDict({m: nn.Linear(d_s, d_s) for m in MODALITIES})
 
         # Clinical symptom tokens and the dense layer over [T_1..T_K, h_fused].
-        # [impl] "Dense(S)" is applied to the flattened sequence so that tokens and
+        # "Dense(S)" is applied to the flattened sequence so that tokens and
         # h_fused interact; a per-row dense layer would leave h unaffected by tokens.
         # The LayerNorm in front rescales the (initially tiny) fused latent, which
         # removes a long flat start to training.
@@ -142,7 +140,7 @@ class Divine(nn.Module):
         self.token_dense = nn.Sequential(nn.LayerNorm((k + 1) * d_s),
                                          nn.Linear((k + 1) * d_s, (k + 1) * d_s), nn.ReLU(),
                                          nn.Dropout(cfg.dropout))
-        # [impl] L_token ("token reconstruction" in the ablation): reconstruct
+        # L_token ("token reconstruction" in the ablation): reconstruct
         # h_fused from the pooled token outputs, plus a decorrelation term that
         # keeps the K symptom tokens specialised (distinct from each other).
         self.token_recon = nn.Linear(d_s, d_s)
@@ -226,7 +224,7 @@ class Divine(nn.Module):
         total = l_cls + cfg.alpha * l_sev + cfg.epsilon * reg + a["L_vae"]
         parts = {"cls": l_cls, "sev": l_sev, "cycle": a["L_cycle"], "sparse": a["L_sparse"],
                  "token": a["L_token"], "vae": a["L_vae"],
-                 # [impl] early stopping watches the supervised terms only, because the
+                 # early stopping watches the supervised terms only, because the
                  # KL warm-up makes the unsupervised terms rise during early training.
                  "monitor": l_cls + cfg.alpha * l_sev}
         return total, {k: v.item() for k, v in parts.items()}

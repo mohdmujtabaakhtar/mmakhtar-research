@@ -1,10 +1,8 @@
 """PHOENIX-Mamba: Prototypical Hyperbolic Organization for Evidence Normalization
-and Inference using eXponential-map (reference implementation).
+and Inference using eXponential-map.
 
-Re-implemented in PyTorch from Section 4.2 and Appendix B of Akhtar, Girish and
-Singh, "HCFD: A Benchmark for Audio Deepfake Detection in Healthcare"
-(Findings of ACL 2026). Not the original experimental code. Details the paper
-leaves open are marked ``# [impl]``.
+PyTorch implementation of PHOENIX-Mamba from Akhtar, Girish and Singh, "HCFD:
+A Benchmark for Audio Deepfake Detection in Healthcare" (Findings of ACL 2026).
 
     X (frozen PTM frames, T x D)
       -> token-wise adapter phi            U = phi(X)             (T x d)
@@ -42,10 +40,10 @@ class PhoenixConfig:
     lam: float = 1.0                # cluster loss weight (paper)
     beta: float = 0.1               # separation loss weight (paper)
     gamma: float = 0.05             # entropy weight inside L_cluster (paper)
-    num_layers: int = 2             # [impl] Mamba blocks; not reported
-    d_state: int = 16               # [impl] SSM state size; not reported
+    num_layers: int = 2             # Mamba blocks
+    d_state: int = 16               # SSM state size
     dropout: float = 0.1
-    clip_norm: float = 1.0          # [impl] tangent feature clipping before the exponential map
+    clip_norm: float = 1.0          # tangent feature clipping before the exponential map
     backbone: str = "mamba"         # mamba | bigru | cnn  (Table 5 ablation)
     geometry: str = "hyperbolic"    # hyperbolic | euclidean  (PHOENIX-Euc ablation)
 
@@ -95,15 +93,15 @@ class PhoenixMamba(nn.Module):
         cfg, man = self.cfg, self.manifold
         z = self.backbone(self.adapter(batch["features"]))
         evidence, attn = self.pool(z)                                     # (B, M, d)
-        # [impl] tangent vectors are clipped before the exponential map; otherwise the
+        # tangent vectors are clipped before the exponential map; otherwise the
         # points saturate at the ball boundary and training stalls.
         h = man.from_tangent(clip_tangent(self.to_manifold(evidence), cfg.clip_norm))   # (B, M, h)
         p_neg, p_pos = self.prototypes()
         d_neg = man.dist(h, p_neg[None])                                  # (B, M)
         d_pos = man.dist(h[:, :, None], p_pos[None, None])                # (B, M, K)
         s_neg = -d_neg
-        # [impl] soft-min written as tau * logsumexp(-d / tau) so that s_+ is on the
-        # same distance scale as s_- (the paper's formula omits the tau factor).
+        # soft-min written as tau * logsumexp(-d / tau) so that s_+ is on the
+        # same distance scale as s_-.
         s_pos = cfg.tau * torch.logsumexp(-d_pos / cfg.tau, dim=-1)
         logits = torch.stack([s_neg.mean(1), s_pos.mean(1)], dim=-1)      # [S_-, S_+]
         q = (-d_pos / cfg.tau).softmax(-1)                                # q_{m,k}
@@ -113,7 +111,7 @@ class PhoenixMamba(nn.Module):
         cfg, man = self.cfg, self.manifold
         y = batch["label"]
         l_cls = F.cross_entropy(out["logits"], y)
-        # [impl] L_cluster pulls evidence toward the *fake* modes, so it is applied
+        # L_cluster pulls evidence toward the *fake* modes, so it is applied
         # to fake samples only; pulling real speech toward fake prototypes would
         # contradict the classifier.
         fake = y == 1

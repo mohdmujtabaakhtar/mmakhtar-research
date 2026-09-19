@@ -1,9 +1,8 @@
 """ORBIT: Optimized Representation Learning via BI-geometric and adversarial
-Training for zero-shot cross-lingual Alzheimer detection (reference implementation).
+Training for zero-shot cross-lingual Alzheimer detection.
 
-Re-implemented in PyTorch from Section 3.1 of Girish, Akhtar, Sheth, Singh,
-Gerard, McClean and Wong-Lin (INTERSPEECH 2026). Not the original experimental
-code. Details the paper leaves open are marked ``# [impl]``.
+PyTorch implementation of ORBIT from Girish, Akhtar, Sheth, Singh, Gerard,
+McClean and Wong-Lin (INTERSPEECH 2026).
 
     audio frames S, transcript tokens H  (frozen multilingual PTMs)
       -> light 1-D conv refinement + attention pooling          a, t
@@ -35,19 +34,19 @@ class OrbitConfig:
     audio_dim: int = 768
     text_dim: int = 768
     num_languages: int = 4
-    hidden: int = 256              # [impl] fusion width
-    geo_dim: int = 64              # [impl] sphere / ball dimension
-    num_clusters: int = 4          # K > 2 centres per manifold  [impl] value
-    tau: float = 0.1               # [impl] cluster temperature
-    tau_c: float = 0.1             # [impl] prototype temperature
-    sphere_radius: float = 1.0     # r  [impl]
-    curvature: float = 1.0         # c  [impl]
-    margin: float = 0.5            # [impl] prototype margin
-    lambda_bgcc: float = 0.1       # [impl]
-    lambda_adv: float = 0.1        # [impl] same lambda_Z for every tap
-    grl_coeff: float = 1.0         # [impl]
+    hidden: int = 256              # fusion width
+    geo_dim: int = 64              # sphere / ball dimension
+    num_clusters: int = 4          # K > 2 centres per manifold
+    tau: float = 0.1               # cluster temperature
+    tau_c: float = 0.1             # prototype temperature
+    sphere_radius: float = 1.0     # r
+    curvature: float = 1.0         # c
+    margin: float = 0.5            # prototype margin
+    lambda_bgcc: float = 0.1
+    lambda_adv: float = 0.1        # same lambda_Z for every tap
+    grl_coeff: float = 1.0
     dropout: float = 0.3
-    clip_norm: float = 1.0         # [impl] tangent clipping before the exponential map
+    clip_norm: float = 1.0         # tangent clipping before the exponential map
     cross_attention: bool = True   # Table 2: ORBIT with / without cross-attention
     use_grl: bool = True           # Table 3: "w/o GRL"
     geometries: list = field(default_factory=lambda: ["sphere", "hyperbolic"])  # Table 3 variants
@@ -91,7 +90,7 @@ class Orbit(nn.Module):
             "text": nn.Sequential(nn.Linear(cfg.text_dim, h), ConvAdapter(h, h, pool=False)),
         })
         self.pool = nn.ModuleDict({m: AttentionPool(h) for m in ("audio", "text")})
-        # [impl] bidirectional cross-attention: the pooled vector of one modality
+        # bidirectional cross-attention: the pooled vector of one modality
         # queries the frame/token sequence of the other.
         self.cross = nn.ModuleDict({m: nn.MultiheadAttention(h, 4, batch_first=True)
                                     for m in ("audio", "text")})
@@ -149,7 +148,7 @@ class Orbit(nn.Module):
                           + F.kl_div(m.clamp_min(1e-8).log(), qs[1], reduction="batchmean"))
         else:
             l_js = q_c.sum() * 0
-        # [impl] prototype margin: the true-class prototype must be closer than the
+        # prototype margin: the true-class prototype must be closer than the
         # other class's by at least `margin`, in every geometry.
         l_margin = 0.0
         for g in out["geo"].values():

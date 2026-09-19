@@ -14,7 +14,6 @@ Pass ``val_loader=None`` to train for a fixed number of epochs.
 """
 from __future__ import annotations
 
-import copy
 import math
 import random
 
@@ -70,6 +69,14 @@ def warmup_cosine(optim, total_steps: int, warmup_frac: float = 0.1):
     return torch.optim.lr_scheduler.LambdaLR(optim, factor)
 
 
+def snapshot(model) -> dict:
+    """Copy of the trainable parameters and buffers (frozen weights such as a frozen
+    language model are left out, so early stopping stays cheap for large backbones)."""
+    keep = {n for n, p in model.named_parameters() if p.requires_grad}
+    keep |= {n for n, _ in model.named_buffers()}
+    return {k: v.detach().clone() for k, v in model.state_dict().items() if k in keep}
+
+
 def fit(model, train_loader: DataLoader, val_loader: DataLoader | None, *, epochs: int = 50,
         lr: float = 1e-3, patience: int = 10, device: str | torch.device = "cpu",
         optimizer: str = "adam", weight_decay: float = 0.0, betas=(0.9, 0.999),
@@ -78,7 +85,8 @@ def fit(model, train_loader: DataLoader, val_loader: DataLoader | None, *, epoch
     """Train the model; with a validation loader, keep the best weights and stop early."""
     device = torch.device(device)
     model.to(device)
-    optim = make_optimizer(model.parameters(), optimizer, lr, weight_decay, betas)
+    optim = make_optimizer([p for p in model.parameters() if p.requires_grad], optimizer, lr,
+                           weight_decay, betas)
     sched = (warmup_cosine(optim, epochs * len(train_loader), warmup_frac)
              if schedule == "cosine" else None)
     best_loss, best_state, bad_epochs = float("inf"), None, 0
@@ -103,7 +111,7 @@ def fit(model, train_loader: DataLoader, val_loader: DataLoader | None, *, epoch
         if verbose:
             print(f"  epoch {epoch:3d}  val_loss {val_loss:.4f}")
         if val_loss < best_loss - 1e-6:
-            best_loss, best_state, bad_epochs = val_loss, copy.deepcopy(model.state_dict()), 0
+            best_loss, best_state, bad_epochs = val_loss, snapshot(model), 0
         else:
             bad_epochs += 1
             if bad_epochs >= patience:
@@ -111,5 +119,5 @@ def fit(model, train_loader: DataLoader, val_loader: DataLoader | None, *, epoch
                     print(f"  early stopping at epoch {epoch}")
                 break
     if best_state is not None:
-        model.load_state_dict(best_state)
+        model.load_state_dict(best_state, strict=False)
     return model

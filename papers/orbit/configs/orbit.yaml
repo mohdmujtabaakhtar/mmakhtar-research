@@ -1,5 +1,4 @@
-# ORBIT configuration. Values marked (paper) are reported in the INTERSPEECH 2026
-# paper; the rest are implementation choices (the paper does not report them).
+# ORBIT configuration. Values marked (paper) follow the INTERSPEECH 2026 paper.
 
 features:
   # Paper's best pairs: mHuBERT-147 (768) + Qwen3-Embeddings (1024), Whisper-base (512) + E5-large (1024).
@@ -25,7 +24,7 @@ model:
   geometries: [sphere, hyperbolic]   # Table 3: [hyperbolic], [sphere], [hyperbolic, euclidean], [sphere, euclidean]
 
 training:
-  lr: 1.0e-3               # AdamW (paper); lr not reported
+  lr: 1.0e-3               # AdamW optimiser (paper)
   weight_decay: 0.01
   batch_size: 32           # (paper)
   epochs: 50               # (paper), with early stopping

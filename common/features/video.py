@@ -71,6 +71,7 @@ def main() -> None:
     ap.add_argument("--model", required=True, choices=sorted(HF_MODELS))
     ap.add_argument("--inputs", required=True, help="text file with one video path per line")
     ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--pool", action="store_true", help="save the average over clips, shape (dim,)")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
 
@@ -79,7 +80,8 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     for line in Path(args.inputs).read_text().splitlines():
         if line.strip():
-            np.save(out / f"{Path(line).stem}.npy", extractor(load_frames(line.strip())))
+            feats = extractor(load_frames(line.strip()))
+            np.save(out / f"{Path(line).stem}.npy", feats.mean(0) if args.pool else feats)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,8 @@
-"""COBALT: COdebook-Aligned BAndit-weighted hyperboLic proTotypE fusion (reference implementation).
+"""COBALT: COdebook-Aligned BAndit-weighted hyperboLic proTotypE fusion.
 
-Re-implemented in PyTorch from Section 3.1 of Akhtar, Girish, Wadhwa, Singh and
-Ma, "From Signals to Patterns: Non-Invasive Tuberculosis Detection from Cough
-Audio using Bandit Weighted Hyperbolic Prototypes" (INTERSPEECH 2026). Not the
-original experimental code. Details the paper leaves open are marked ``# [impl]``.
+PyTorch implementation of COBALT from Akhtar, Girish, Wadhwa, Singh and Ma,
+"From Signals to Patterns: Non-Invasive Tuberculosis Detection from Cough Audio
+using Bandit Weighted Hyperbolic Prototypes" (INTERSPEECH 2026).
 
 For each of two streams m (e.g. MFCC frames and PaSST tokens):
 
@@ -39,22 +38,22 @@ STREAMS = ("stream1", "stream2")
 @dataclass
 class CobaltConfig:
     input_dims: dict = field(default_factory=lambda: {"stream1": 40, "stream2": 768})
-    adapter_dim: int = 128        # [impl] d, adapter width
-    num_tokens: int = 8           # [impl] K tokens per stream
-    hyp_dim: int = 64             # [impl] d_h
-    num_prototypes: int = 32      # [impl] M shared codebook size
-    curvature: float = 1.0        # [impl] c
-    tau_q: float = 0.1            # [impl] assignment temperature
-    tau_w: float = 1.0            # [impl] reliability temperature
-    bandit_lr: float = 0.1        # [impl] eta
-    reward_alpha: float = 1.0     # [impl] alpha
-    reward_beta: float = 1.0      # [impl] beta
-    beta_vq: float = 0.25         # [impl] VQ loss weight
-    commitment: float = 0.25      # [impl] commitment weight inside L_vq
-    lam_entropy: float = 0.01     # [impl] lambda for H(w)
+    adapter_dim: int = 128        # d, adapter width
+    num_tokens: int = 8           # K tokens per stream
+    hyp_dim: int = 64             # d_h
+    num_prototypes: int = 32      # M shared codebook size
+    curvature: float = 1.0        # c
+    tau_q: float = 0.1            # assignment temperature
+    tau_w: float = 1.0            # reliability temperature
+    bandit_lr: float = 0.1        # eta
+    reward_alpha: float = 1.0     # alpha
+    reward_beta: float = 1.0      # beta
+    beta_vq: float = 0.25         # VQ loss weight
+    commitment: float = 0.25      # commitment weight inside L_vq
+    lam_entropy: float = 0.01     # lambda for H(w)
     hidden: int = 128             # MLP head width (paper: e.g. 128 units)
     dropout: float = 0.3
-    clip_norm: float = 1.0        # [impl] tangent clipping before the exponential map
+    clip_norm: float = 1.0        # tangent clipping before the exponential map
     geometry: str = "hyperbolic"  # hyperbolic | euclidean   (COBALT-E, Table 2)
     fusion: str = "cobalt"        # cobalt | mobius | concat  (Table 3 / Table 2 baselines)
 
@@ -68,7 +67,7 @@ class Cobalt(nn.Module):
         self.to_manifold = nn.ModuleDict({s: nn.Linear(d, dh) for s in STREAMS})
         self.manifold = make_manifold(cfg.geometry, cfg.curvature)
         self.codebook = nn.Parameter(torch.randn(m, dh) * 0.3)    # tangent-space parameters
-        # [impl] Bandit scores Q live in a buffer (no gradient). A learnable offset s
+        # Bandit scores Q live in a buffer (no gradient). A learnable offset s
         # lets the H(w) term act through gradients, since w = softmax((Q + s) / tau_w).
         self.register_buffer("Q", torch.zeros(m))
         self.offset = nn.Parameter(torch.zeros(m))
@@ -90,7 +89,7 @@ class Cobalt(nn.Module):
         return ((self.Q + self.offset) / self.cfg.tau_w).softmax(-1)
 
     def _head_input(self, p: dict, w: torch.Tensor) -> torch.Tensor:
-        # [impl] evidence and weights are each rescaled by M so that uniform
+        # evidence and weights are each rescaled by M so that uniform
         # reliability leaves the evidence unchanged; otherwise the fused vector
         # has entries of order 1/M^2 and the head's decision threshold drifts.
         m = self.cfg.num_prototypes

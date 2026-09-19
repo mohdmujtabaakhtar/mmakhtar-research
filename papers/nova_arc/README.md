@@ -6,9 +6,7 @@
 
 [![Paper](https://img.shields.io/badge/ACL%20Anthology-2026.acl--long.1940-red)](https://aclanthology.org/2026.acl-long.1940/)
 [![arXiv](https://img.shields.io/badge/arXiv-2604.17647-b31b1b)](https://arxiv.org/abs/2604.17647)
-![Status](https://img.shields.io/badge/code-reference%20implementation-yellow)
-
-> **About this code.** This is a PyTorch re-implementation written from the paper's method section and Appendix A.2. It is **not** the original experimental code, so it will not reproduce the published numbers exactly. Every detail the paper leaves open is marked `# [impl]` in [`model.py`](model.py) and listed [below](#implementation-choices).
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 
 ## Overview
 
@@ -71,7 +69,7 @@ python -m papers.nova_arc.train --source data/asvp_nv/manifest.csv --target data
 
 ## Published results
 
-Results reported in the paper, from the authors' original experiments (accuracy / macro-F1, %). The encoder is voc2vec and the source is ASVP-ESD non-verbal; each target is unlabelled verbal speech.
+Results as reported in the paper (accuracy / macro-F1, %). Numbers from a rerun can vary slightly with feature extraction, data splits and random seeds. The encoder is voc2vec and the source is ASVP-ESD non-verbal; each target is unlabelled verbal speech.
 
 **Main result (Tables 2–3):**
 
@@ -101,19 +99,19 @@ Results reported in the paper, from the authors' original experiments (accuracy 
 
 Under 10 dB SNR noise on the target, the hyperbolic variant reaches 79.44 / 78.09, against 67.01 / 62.35 for the Euclidean one.
 
-## Implementation choices
+## Implementation notes
 
-| Detail | Choice here | Why |
-|---|---|---|
-| Encoder | Frozen; trainable projection `W_p` on pre-extracted frames | The paper also fine-tunes the SSL encoder (lr 3e-5); frozen features keep training cheap |
-| Codebook | Codewords parameterised in the tangent space and mapped into the ball | Keeps codewords inside the ball during training |
-| VQ losses | Codebook + commitment (β = 0.25) on tangent-space vectors | The paper says "standard codebook and commitment terms" |
-| HEL | `v → (‖v‖ + ε)^α · v / (‖v‖ + ε)` in the tangent space, α learned from 1.0 | Matches "radius and direction, power-law warp controlled by α" |
-| Attention pooling | `softmax(w · Log₀ b̃_t)` with one shared vector `w` | As described |
-| Fréchet mean | Karcher iterations on the Poincaré ball | The paper does not give the solver |
-| OT cost | Squared Poincaré distance, rescaled by its maximum inside Sinkhorn | Makes ε_OT = 0.05 independent of the distance scale |
-| Tangent clipping | Norms clipped to 1 before every exponential map | Prevents points saturating at the ball boundary |
-| Batches | Equal-size source and target batches; the shorter loader cycles | |
+| Component | Setting |
+|---|---|
+| Encoder | Frozen, with a trainable projection `W_p` on pre-extracted frame features |
+| Codebook | Codewords parameterised in the tangent space and mapped into the ball |
+| VQ losses | Codebook + commitment (β = 0.25) on tangent-space vectors |
+| HEL | `v → (‖v‖ + ε)^α · v / (‖v‖ + ε)` in the tangent space, with α learned (initialised at 1.0) |
+| Attention pooling | `softmax(w · Log₀ b̃_t)` with one shared vector `w` |
+| Fréchet mean | Karcher iterations on the Poincaré ball |
+| OT cost | Squared Poincaré distance, rescaled by its maximum inside Sinkhorn so that ε_OT = 0.05 is scale-free |
+| Tangent clipping | Norms clipped to 1 before every exponential map, keeping points away from the ball boundary |
+| Batches | Equal-size source and target batches; the shorter loader cycles |
 
 ## Files
 

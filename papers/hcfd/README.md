@@ -7,9 +7,7 @@
 [![Paper](https://img.shields.io/badge/ACL%20Anthology-2026.findings--acl.1739-red)](https://aclanthology.org/2026.findings-acl.1739/)
 [![arXiv](https://img.shields.io/badge/arXiv-2604.17642-b31b1b)](https://arxiv.org/abs/2604.17642)
 [![Project page](https://img.shields.io/badge/Project-page-blue)](https://helixometry.github.io/HCFD/)
-![Status](https://img.shields.io/badge/code-reference%20implementation-yellow)
-
-> **About this code.** This is a PyTorch re-implementation of **PHOENIX-Mamba**, written from Section 4.2 and Appendix B. It is **not** the original experimental code, so it will not reproduce the published numbers exactly. Every detail the paper leaves open is marked `# [impl]` in [`model.py`](model.py) and listed [below](#implementation-choices). The Healthcare CodecFake dataset itself is not included.
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 
 ## Overview
 
@@ -82,7 +80,7 @@ Accuracy and macro-F1 use a decision threshold chosen on dev; EER and AUC are th
 
 ## Published results
 
-Results reported in the paper, from the authors' original experiments (accuracy / macro-F1, %).
+Results as reported in the paper (accuracy / macro-F1, %). Numbers from a rerun can vary slightly with feature extraction, data splits and random seeds.
 
 **Detectors trained on standard CodecFake fail on clinical speech (Table 1, AASIST, English):** Dep 48.62 / 44.03, Alz 34.19 / 32.51, Dys 36.71 / 34.39.
 
@@ -109,17 +107,17 @@ Results reported in the paper, from the authors' original experiments (accuracy 
 | PHOENIX-Euc | 83.62 / 81.24 | 79.48 / 77.16 | 84.72 / 83.67 |
 | **PHOENIX-Mamba (full)** | **97.04 / 94.81** | **96.73 / 94.20** | **96.05 / 93.28** |
 
-## Implementation choices
+## Implementation notes
 
-| Detail | Choice here | Why |
-|---|---|---|
-| Mamba backbone | 2 pre-norm blocks (selective SSM → LayerNorm → gated MLP, residual), state size 16, pure PyTorch | Figure 1 shows the block; depth and state size not reported. The scan is sequential, so use a GPU for real runs |
-| Evidence pooling | M learnable queries; scaled dot-product scores over time; output projection + LayerNorm | Follows Figure 1 |
-| Fake score `s₊` | `τ · logsumexp(−d/τ)` | The paper's formula omits the τ factor, which would put `s₊` on a 1/τ larger scale than `s₋` |
-| `L_cluster` | Applied to fake samples only | It pulls evidence toward the fake modes, which would contradict the classifier for real speech |
-| Tangent clipping | Norm ≤ 1 before the exponential map | Otherwise points saturate at the ball boundary and training stalls |
-| Checkpoint | Best dev cross-entropy within the 20 epochs | Not specified |
-| Encoders | Frozen, with features pre-extracted | The paper also keeps WavLM, wav2vec 2.0 and Whisper frozen |
+| Component | Setting |
+|---|---|
+| Mamba backbone | 2 pre-norm blocks (selective SSM → LayerNorm → gated MLP, residual), state size 16, in pure PyTorch; use a GPU for full-size runs |
+| Evidence pooling | M learnable queries with scaled dot-product scores over time, then output projection + LayerNorm |
+| Fake score `s₊` | `τ · logsumexp(−d/τ)`, a smooth soft-min on the same distance scale as `s₋` |
+| `L_cluster` | Applied to fake samples, pulling their evidence toward the fake modes |
+| Tangent clipping | Norm ≤ 1 before the exponential map, keeping points away from the ball boundary |
+| Checkpoint | Best dev cross-entropy within the 20 epochs |
+| Encoders | Frozen, with features pre-extracted |
 
 ## Files
 

@@ -243,3 +243,32 @@ def make_manifold(name: str, curvature: float = 1.0, radius: float = 1.0) -> Man
     if name == "euclidean":
         return Euclidean()
     raise ValueError(f"Unknown manifold '{name}'")
+
+
+# ------------------------------------------------------------------ mixed-curvature helpers
+
+def stereographic_to_ball(x: torch.Tensor, c=1.0) -> torch.Tensor:
+    """Map a point inside the radius-1/sqrt(c) ball (e.g. a scaled sphere point) with
+    y = x / (1 + sqrt(1 - c ||x||^2)), the inverse stereographic map used by RHYME."""
+    sq = (c * (x * x).sum(-1, keepdim=True)).clamp(max=1 - 1e-5)
+    return x / (1 + torch.sqrt(1 - sq))
+
+
+def sphere_logmap_north(x: torch.Tensor) -> torch.Tensor:
+    """Logarithmic map at the north pole n = e_1 of the unit sphere:
+    log_n(x) = theta (x - cos(theta) n) / sin(theta), theta = arccos(<x, n>)."""
+    x = to_sphere(x)
+    cos = x[..., :1].clamp(-1 + EPS, 1 - EPS)
+    theta = torch.acos(cos)
+    north = torch.zeros_like(x)
+    north[..., 0] = 1.0
+    return theta * (x - cos * north) / torch.sin(theta)
+
+
+def sphere_expmap_north(v: torch.Tensor) -> torch.Tensor:
+    """Exponential map at the north pole for a tangent vector v (first coordinate ignored)."""
+    v = torch.cat([torch.zeros_like(v[..., :1]), v[..., 1:]], dim=-1)
+    norm = _norm(v)
+    north = torch.zeros_like(v)
+    north[..., 0] = 1.0
+    return torch.cos(norm) * north + torch.sin(norm) * v / norm

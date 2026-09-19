@@ -80,3 +80,48 @@ class MultiTaskProbe(nn.Module):
         parts = {k: F.cross_entropy(out[f"logits_{k}"], batch[k]) for k in self.heads}
         total = sum(self.task_weights[k] * v for k, v in parts.items())
         return total, {k: v.item() for k, v in parts.items()}
+
+
+class EmbeddingCNNClassifier(nn.Module):
+    """Single-representation CNN probe on an utterance-level embedding.
+
+    ``[Conv1d(k=3) -> ReLU -> MaxPool(2)] x len(filters)`` along the feature axis,
+    flatten, dense layers, then a linear output layer. The filter and dense sizes
+    differ per paper and are set from its config.
+    """
+
+    def __init__(self, in_dim: int, num_classes: int, filters=(64, 128), dense=(128,),
+                 dropout: float = 0.3, stream: str = "fm1"):
+        super().__init__()
+        from common.layers import EmbeddingCNN, dense_block
+        self.stream = stream
+        self.cnn = EmbeddingCNN(in_dim, filters)
+        self.fc, width = dense_block(self.cnn.flat_dim, dense, dropout)
+        self.out = nn.Linear(width, num_classes)
+
+    def forward(self, batch: dict) -> dict:
+        return {"logits": self.out(self.fc(self.cnn(batch[self.stream]).flatten(1)))}
+
+    def loss(self, out: dict, batch: dict):
+        ce = F.cross_entropy(out["logits"], batch["label"])
+        return ce, {"ce": ce.item()}
+
+
+class EmbeddingFCNClassifier(nn.Module):
+    """Single-representation fully connected probe (same dense block, no convolutions)."""
+
+    def __init__(self, in_dim: int, num_classes: int, dense=(128,), dropout: float = 0.3,
+                 stream: str = "fm1"):
+        super().__init__()
+        from common.layers import dense_block
+        self.stream = stream
+        self.fc, width = dense_block(in_dim, dense, dropout)
+        self.out = nn.Linear(width, num_classes)
+
+    def forward(self, batch: dict) -> dict:
+        x = batch[self.stream]
+        return {"logits": self.out(self.fc(x.mean(1) if x.dim() == 3 else x))}
+
+    def loss(self, out: dict, batch: dict):
+        ce = F.cross_entropy(out["logits"], batch["label"])
+        return ce, {"ce": ce.item()}

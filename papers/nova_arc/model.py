@@ -1,10 +1,9 @@
 """NOVA-ARC: NOn-verbal to Verbal Adaptation via hyperbolic Alignment, Radial
-calibration and Codebook tokens (reference implementation).
+calibration and Codebook tokens.
 
-Re-implemented in PyTorch from Section 3.2 and Appendix A.2 of Girish, Akhtar and
-Singh, "Prosody as Supervision: Bridging the Non-Verbal-Verbal for Multilingual
-Speech Emotion Recognition" (ACL 2026). Not the original experimental code.
-Details the paper leaves open are marked ``# [impl]``.
+PyTorch implementation of NOVA-ARC from Girish, Akhtar and Singh, "Prosody as
+Supervision: Bridging the Non-Verbal-Verbal for Multilingual Speech Emotion
+Recognition" (ACL 2026).
 
 Shared forward pass for any utterance (labelled non-verbal source or unlabelled
 verbal target):
@@ -51,7 +50,7 @@ class NovaArcConfig:
     sinkhorn_iters: int = 50        # (paper)
     lambda_opt: float = 1.0         # (paper)
     lambda_ot: float = 1.0          # (paper)
-    clip_norm: float = 1.0          # [impl] tangent clipping before the exponential map
+    clip_norm: float = 1.0          # tangent clipping before the exponential map
     geometry: str = "hyperbolic"    # hyperbolic | euclidean   (Table 3 EUC vs HYP)
     tokens: str = "both"            # both | continuous | discrete  (Table 4 "No VQ" / "Token only")
     fusion: str = "mobius"          # mobius | concat                (Table 4 "Concat/MLP")

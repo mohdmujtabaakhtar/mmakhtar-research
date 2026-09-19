@@ -38,3 +38,20 @@ class _GradReverse(torch.autograd.Function):
 def grad_reverse(x: torch.Tensor, coeff: float = 1.0) -> torch.Tensor:
     """Identity in the forward pass; multiplies gradients by ``-coeff`` backwards."""
     return _GradReverse.apply(x, coeff)
+
+
+def ot_exchange(x1: torch.Tensor, x2: torch.Tensor, epsilon: float = 0.05, iters: int = 50):
+    """Transport two batches of features onto each other (PARROT, MATA).
+
+    The cost is the Euclidean distance between rows of ``x1`` (B, d) and ``x2`` (B, d),
+    normalised by its maximum; ``gamma = Sinkhorn(cost)`` with uniform marginals.
+    Returns ``(x2_to_x1, x1_to_x2, gamma)`` where ``x2_to_x1[i]`` is the barycentric
+    image of the ``x2`` batch at row ``i`` of ``x1`` and vice versa, so each transported
+    row lines up with the row it is concatenated with. Rows of ``gamma`` sum to 1/B,
+    hence the factor B.
+    """
+    b = x1.shape[0]
+    cost = torch.cdist(x1, x2)
+    a = torch.full((b,), 1.0 / b, device=x1.device, dtype=x1.dtype)
+    gamma = sinkhorn(cost.detach(), a, a.clone(), epsilon=epsilon, iters=iters)
+    return b * gamma @ x2, b * gamma.T @ x1, gamma

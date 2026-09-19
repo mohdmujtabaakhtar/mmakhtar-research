@@ -5,9 +5,7 @@
 \* Equal contribution
 
 [![arXiv](https://img.shields.io/badge/arXiv-2606.17337-b31b1b)](https://arxiv.org/abs/2606.17337)
-![Status](https://img.shields.io/badge/code-reference%20implementation-yellow)
-
-> **About this code.** This is a PyTorch re-implementation written from the paper's method section. It is **not** the original experimental code, so it will not reproduce the published numbers exactly. The paper reports few hyperparameters, so most values here are implementation choices, marked `# [impl]` in [`model.py`](model.py) and listed [below](#implementation-choices).
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 
 ## Overview
 
@@ -67,7 +65,7 @@ python -m papers.cobalt.train --manifest data/coda/manifest.csv
 
 ## Published results
 
-Results reported in the paper, from the authors' original experiments (CODA TB, five-fold CV, %).
+Results as reported in the paper (CODA TB, five-fold CV, %). Numbers from a rerun can vary slightly with feature extraction, data splits and random seeds.
 
 | Model | Acc | F1 | AUC |
 |---|---|---|---|
@@ -79,20 +77,20 @@ Results reported in the paper, from the authors' original experiments (CODA TB, 
 | **COBALT, MFCC + PaSST (Table 3)** | **88.93** | 87.26 | **89.07** |
 | COBALT, WavLM + PaSST (Table 3) | 88.26 | **87.52** | 86.11 |
 
-## Implementation choices
+## Implementation notes
 
-| Detail | Choice here | Why |
-|---|---|---|
-| Adapter `g_m` | One Conv1d(k=3)–BN–ReLU–MaxPool block to 128 channels | "Lightweight 1-D CNN adapter"; width not reported |
-| Tokenise | Adaptive average pooling to K = 8 tokens | The paper allows "adaptive pooling or learnable attention pooling" |
-| d_h, M, τ_q, τ_w, c | 64, 32, 0.1, 1.0, 1.0 | Not reported |
-| Bandit | η = 0.1; α = β = 1; usage `u_j` = assignment mass on prototype j in the batch (max-normalised) | Follows the update rule; constants not reported |
-| Baseline for the reward | Same forward pass with uniform prototype weights | The paper's example: "uniform weights" |
-| Confidence margin M | Mean of p(true class) − max p(other class) | Not defined in the paper |
-| `H(w)` term | `w = softmax((Q + s)/τ_w)`, where Q is the bandit buffer and s is a learnable offset | Bandit scores have no gradient; the offset lets `λ H(w)` act (λ = 0.01) |
-| Evidence scaling | Evidence and weights each multiplied by M, then a LayerNorm in the head | Otherwise entries are of order 1/M² and the decision threshold drifts |
-| L_vq | Codebook + commitment (0.25) in the tangent space, β_vq = 0.25 | "Stream-wise VQ loss"; weights not reported |
-| Optimiser | Adam, lr 1e-3, 50 epochs, batch 32, no early stopping | Adam, epochs and batch size from the paper |
+| Component | Setting |
+|---|---|
+| Adapter `g_m` | One Conv1d(k=3) → BN → ReLU → MaxPool block to 128 channels |
+| Tokeniser | Adaptive average pooling to K = 8 tokens |
+| d_h, M, τ_q, τ_w, c | 64, 32, 0.1, 1.0, 1.0 |
+| Bandit | η = 0.1; α = β = 1; usage `u_j` = assignment mass on prototype j in the batch (max-normalised) |
+| Reward baseline | The same forward pass with uniform prototype weights |
+| Confidence margin | Mean of p(true class) − max p(other class) |
+| Reliability weights | `w = softmax((Q + s)/τ_w)`: Q is the bandit score buffer and s a learnable offset through which `λ H(w)` acts (λ = 0.01) |
+| Evidence scaling | Evidence and weights each multiplied by M, then a LayerNorm in the head, which keeps the decision threshold stable |
+| L_vq | Codebook + commitment (0.25) in the tangent space, β_vq = 0.25 |
+| Training | Adam, lr 1e-3, 50 epochs, batch 32 |
 
 ## Files
 

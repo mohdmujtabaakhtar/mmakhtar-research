@@ -1,13 +1,16 @@
-"""Frame-level feature extraction from frozen speech foundation models.
+"""Feature extraction from frozen speech and audio foundation models.
 
 Usage (one .npy per input file, shape (frames, dim)):
 
     python -m common.features.speech --model wavlm \
         --inputs data/wavs.txt --out-dir data/features/wavlm
 
+    # utterance-level vector (average pooling over frames), shape (dim,)
+    python -m common.features.speech --model whisper --pool --inputs ... --out-dir ...
+
 ``--inputs`` is a text file with one audio path per line. Audio is loaded as
 mono and resampled to 16 kHz. Models load from the Hugging Face Hub on first
-use; x-vector needs ``speechbrain``, TRILLsson needs ``tensorflow`` and
+use; x-vector and ECAPA need ``speechbrain``, TRILLsson needs ``tensorflow`` and
 ``tensorflow_hub``, and PaSST needs ``hear21passt`` (all optional dependencies).
 """
 from __future__ import annotations
@@ -29,9 +32,12 @@ HF_MODELS = {
     "mhubert": "utter-project/mHuBERT-147",       # multilingual HuBERT (ORBIT)
     "mms": "facebook/mms-1b",                     # (NOVA-ARC, ORBIT)
     "xlsr": "facebook/wav2vec2-xls-r-1b",         # (ORBIT)
+    "xlsr_300m": "facebook/wav2vec2-xls-r-300m",
+    "unispeech_sat": "microsoft/unispeech-sat-base",
+    "ast": "MIT/ast-finetuned-audioset-14-14-0.443",   # Audio Spectrogram Transformer (SNIFR)
 }
 TRILLSSON_URL = "https://tfhub.dev/google/trillsson3/1"
-XVECTOR_SOURCE = "speechbrain/spkrec-xvect-voxceleb"
+SPEECHBRAIN = {"xvector": "speechbrain/spkrec-xvect-voxceleb", "ecapa": "speechbrain/spkrec-ecapa-voxceleb"}
 
 
 def load_audio(path: str | Path) -> np.ndarray:
@@ -53,9 +59,9 @@ class SpeechExtractor:
             self.processor = AutoFeatureExtractor.from_pretrained(repo)
             model = AutoModel.from_pretrained(repo)
             self.model = (model.encoder if name == "whisper" else model).to(self.device).eval()
-        elif name == "xvector":
+        elif name in SPEECHBRAIN:
             from speechbrain.inference.speaker import EncoderClassifier
-            self.model = EncoderClassifier.from_hparams(source=XVECTOR_SOURCE,
+            self.model = EncoderClassifier.from_hparams(source=SPEECHBRAIN[name],
                                                         run_opts={"device": str(self.device)})
         elif name == "passt":
             from hear21passt.base import get_basic_model
@@ -65,7 +71,7 @@ class SpeechExtractor:
             self.model = hub.KerasLayer(TRILLSSON_URL)
         else:
             raise ValueError(f"Unknown model '{name}'. Choose from "
-                             f"{sorted([*HF_MODELS, 'xvector', 'trillsson', 'passt'])}")
+                             f"{sorted([*HF_MODELS, *SPEECHBRAIN, 'trillsson', 'passt'])}")
 
     @torch.no_grad()
     def __call__(self, wav: np.ndarray) -> np.ndarray:
@@ -76,7 +82,7 @@ class SpeechExtractor:
             wav32 = librosa.resample(wav, orig_sr=SAMPLE_RATE, target_sr=32_000)
             emb = self.model(torch.from_numpy(wav32)[None].to(self.device))
             return emb.reshape(1, -1).cpu().numpy()
-        if self.name == "xvector":  # utterance-level embedding
+        if self.name in SPEECHBRAIN:  # utterance-level embedding
             emb = self.model.encode_batch(torch.from_numpy(wav)[None].to(self.device))
             return emb.squeeze(0).cpu().numpy()
         inputs = self.processor(wav, sampling_rate=SAMPLE_RATE, return_tensors="pt")
@@ -92,6 +98,7 @@ def main() -> None:
     ap.add_argument("--model", required=True)
     ap.add_argument("--inputs", required=True, help="text file with one audio path per line")
     ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--pool", action="store_true", help="save the average over frames, shape (dim,)")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
 
@@ -100,7 +107,8 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     for line in Path(args.inputs).read_text().splitlines():
         if line.strip():
-            np.save(out / f"{Path(line).stem}.npy", extractor(load_audio(line.strip())))
+            feats = extractor(load_audio(line.strip()))
+            np.save(out / f"{Path(line).stem}.npy", feats.mean(0) if args.pool else feats)
 
 
 if __name__ == "__main__":

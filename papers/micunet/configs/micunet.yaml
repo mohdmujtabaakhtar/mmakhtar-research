@@ -1,0 +1,29 @@
+# MiCuNet configuration. Values marked (paper) follow the IJCNLP-AACL 2025 Findings paper.
+
+features:
+  ptm_dim: 1280            # MMS-1B / XLS-R (paper's best: MMS); 768 wav2vec 2.0 / WavLM; 512 Whisper / x-vector
+  spec_frames: 256         # spectrogram frames (crop / pad)
+  spec_filters: 64         # filterbank channels (e.g. STFT + mel = "S-ME")
+
+model:
+  ptm_filters: [64, 128]      # 1-D CNN on the PTM embedding (paper)
+  spec_channels: [32, 64, 128]  # 3-D CNN blocks, 3x3x3 conv + BN + ReLU + 2x2x2 max-pool (paper)
+  spec_depth: 8
+  heads: 4
+  manifold_dim: 128
+  curvature: 1.0              # initial c, learned (paper)
+  spaces: [hyperbolic, euclidean, spherical]   # Table 4 ablations drop hyperbolic and/or spherical
+  gating: learned             # learned | uniform  (Table 4: "No learnable gating")
+  head_hidden: 128
+  dropout: 0.3
+
+training:
+  lr: 1.0e-3               # Adam (paper)
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper)
+  patience: 10             # early stopping on dev (paper)
+
+synthetic:
+  ptm_dim: 128
+  spec_frames: 64
+  spec_filters: 32

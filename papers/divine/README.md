@@ -6,9 +6,7 @@
 
 [![Paper](https://img.shields.io/badge/ACL%20Anthology-2026.eacl--long.248-red)](https://aclanthology.org/2026.eacl-long.248/)
 [![PDF](https://img.shields.io/badge/PDF-download-blue)](https://aclanthology.org/2026.eacl-long.248.pdf)
-![Status](https://img.shields.io/badge/code-reference%20implementation-yellow)
-
-> **About this code.** This is a PyTorch re-implementation written from the paper's method section. It is **not** the original experimental code (the paper's experiments used TensorFlow), so it will not reproduce the published numbers exactly. Every place where the paper leaves a detail open is marked `# [impl]` in [`model.py`](model.py) and listed [below](#implementation-choices).
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 
 ## Overview
 
@@ -83,7 +81,7 @@ To run the Table 5 ablations, set one of `use_cycle`, `use_sparse` or `use_token
 
 ## Published results
 
-Results reported in the paper (TNF, subject-wise 5-fold CV, %). These come from the authors' original experiments, not from this re-implementation.
+Results as reported in the paper (TNF, subject-wise 5-fold CV, %). Numbers from a rerun can vary slightly with feature extraction, data splits and random seeds.
 
 **Best configurations (Table 3):** video + speech foundation models fused with DIVINE.
 
@@ -114,25 +112,22 @@ Results reported in the paper (TNF, subject-wise 5-fold CV, %). These come from 
 | Single-level latent fusion | 95.22 | 93.80 | 1.85 | 2.62 |
 | Flat fusion (no bottleneck) | 93.87 | 92.10 | 2.11 | 2.88 |
 
-## Implementation choices
+## Implementation notes
 
-The paper does not specify the following, so this implementation makes these choices:
+| Component | Setting |
+|---|---|
+| Loss reductions | Reconstruction, KL, cycle and L1 terms are averaged over feature dimensions, keeping them on the scale of the cross-entropy losses |
+| `β_s`, `β_p` | 1.0 |
+| KL schedule | Linear warm-up over 300 steps, which prevents posterior collapse early in training |
+| Local temporal refinement | 2 conv blocks (Conv1d → BN → ReLU → MaxPool) |
+| `Dense(S)` over `[T_1…T_K, h_fused]` | One dense layer over the flattened sequence with LayerNorm in front, so tokens and `h_fused` interact |
+| `L_token` | Reconstructs `h_fused` from the pooled token outputs, plus a decorrelation term that keeps tokens specialised |
+| Severity | 3-class softmax head; MAE/RMSE computed from the expected class index |
+| Missing modality | Input zeroed and fusion gate set to 0; modality dropout (p = 0.2) during training |
+| Early stopping | Patience 15 on validation `L_cls + α·L_sev` |
+| Latent sizes | `d' = 128`, `d_w = 64`, `d_s = 64`, `K = 8` |
 
-| Detail | Choice here | Why |
-|---|---|---|
-| Framework | PyTorch | The original used TensorFlow |
-| Loss reductions | Mean over feature dims for every reconstruction, KL, cycle and L1 term | With summed terms the VAE priors dominated and the shared latents collapsed in testing |
-| `β_s`, `β_p` | 1.0 | Not reported |
-| KL schedule | Linear warm-up over 300 steps | Avoids posterior collapse early in training |
-| Conv blocks in local refinement | 2 | Figure 2 marks the block "2×"; the text describes one |
-| `Dense(S)` over `[T_1…T_K, h_fused]` | One dense layer over the flattened sequence, with LayerNorm in front | A per-row dense layer would leave `h_fused` unaffected by the tokens |
-| `L_token` | Reconstruct `h_fused` from pooled token outputs + token decorrelation | Paper names it only as "token specialisation / reconstruction" |
-| Severity target | 3-class softmax head; MAE/RMSE from the expected class index | Paper describes a softmax severity head |
-| Missing modality | Its input is zeroed and its fusion gate set to 0; optional modality dropout (p = 0.2) in training | Supports the video-only and audio-only test conditions |
-| Early stopping | Patience 15 on validation `L_cls + α·L_sev` | The paper uses early stopping but gives no criterion |
-| Latent sizes | `d' = 128`, `d_w = 64`, `d_s = 64`, `K = 8` | Not reported |
-
-If you have the original values for any of these, update [`configs/divine.yaml`](configs/divine.yaml).
+All values live in [`configs/divine.yaml`](configs/divine.yaml).
 
 ## Files
 

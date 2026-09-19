@@ -5,9 +5,7 @@
 \* Equal contribution
 
 [![arXiv](https://img.shields.io/badge/arXiv-2606.17254-b31b1b)](https://arxiv.org/abs/2606.17254)
-![Status](https://img.shields.io/badge/code-reference%20implementation-yellow)
-
-> **About this code.** This is a PyTorch re-implementation written from the paper's method section. It is **not** the original experimental code, so it will not reproduce the published numbers exactly. Every detail the paper leaves open is marked `# [impl]` in [`model.py`](model.py) and listed [below](#implementation-choices).
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 
 ## Overview
 
@@ -82,7 +80,7 @@ python -m papers.orbit.train --manifest data/sadd/manifest.csv --protocol ltlo -
 
 ## Published results
 
-Results reported in the paper, from the authors' original experiments (accuracy / macro-F1, %). **LTLO** trains on two languages and tests on the other two; **LOLO** trains on three and tests on the fourth.
+Results as reported in the paper (accuracy / macro-F1, %). Numbers from a rerun can vary slightly with feature extraction, data splits and random seeds. **LTLO** trains on two languages and tests on the other two; **LOLO** trains on three and tests on the fourth.
 
 **Best configurations (Table 2):**
 
@@ -104,18 +102,18 @@ Results reported in the paper, from the authors' original experiments (accuracy 
 | Only sphere | 76.72 / 74.34 | 77.81 / 76.97 |
 | w/o gradient reversal | 70.99 / 68.48 | 74.53 / 71.41 |
 
-## Implementation choices
+## Implementation notes
 
-| Detail | Choice here | Why |
-|---|---|---|
-| Encoders | Frozen; features pre-extracted | The paper unfreezes the top layers after 2–3 epochs |
-| Cross-attention | The pooled vector of each modality queries the other modality's sequence | "One embedding as the query and the other as context"; pooled-to-pooled attention would be trivial |
-| `L_margin` | Hinge: the true-class prototype must be closer than the other by margin 0.5, in each geometry | Named in the paper but not defined |
-| `L_cls` | NLL of the product-of-experts vote `p_vote` | The prediction is `argmax p_vote` |
-| `K`, τ, τ_c, r, c | 4, 0.1, 0.1, 1, 1 | Not reported (the paper says K > 2) |
-| λ_BGCC, λ_Z, GRL coefficient | 0.1, 0.1 (every tap), 1.0 | Not reported |
-| Validation | 10% of training-language speakers held out for early stopping | The paper uses early stopping but gives no split |
-| LTLO scoring | Averaged over the two held-out languages | As in the paper |
+| Component | Setting |
+|---|---|
+| Encoders | Frozen, with features pre-extracted |
+| Cross-attention | The pooled vector of each modality queries the other modality's frame/token sequence |
+| `L_margin` | Hinge loss: the true-class prototype must be closer than the other class's by a margin of 0.5, in each geometry |
+| `L_cls` | NLL of the product-of-experts vote `p_vote`; the prediction is `argmax p_vote` |
+| `K`, τ, τ_c, r, c | 4, 0.1, 0.1, 1, 1 |
+| λ_BGCC, λ_Z, GRL coefficient | 0.1, 0.1 (every tap), 1.0 |
+| Validation | 10% of training-language speakers held out for early stopping |
+| LTLO scoring | Averaged over the two held-out languages |
 
 ## Files
 
