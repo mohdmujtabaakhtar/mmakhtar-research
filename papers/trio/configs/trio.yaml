@@ -1,0 +1,36 @@
+# TRIO configuration. Values marked (paper) follow the EUSIPCO 2025 paper.
+
+features:
+  # Paper's best pair: x-vector (512) + TRILLsson (1024), utterance-level embeddings.
+  fm1: {dim: 512}
+  fm2: {dim: 1024}
+
+num_classes: 19            # ASVspoof 2019 systems A01-A19 (paper); 12 for CFAD
+
+model:
+  filters: [128, 64]       # two Conv1d blocks, kernel 3, max-pool (paper)
+  hidden: [90, 45]         # FCN block (paper)
+  heads: 4
+  cca_dim: 16
+  cca_reg: 1.0e-3
+  lam: 0.3                 # lambda (paper)
+  dropout: 0.3
+  fusion: trio             # trio | concat
+
+baseline:                  # single-SPTM CNN / FCN (paper)
+  filters: [128, 64]
+  dense: [90, 45]
+
+training:
+  protocol: kfold          # ASVspoof 2019: 5-fold CV (paper); CFAD: official
+  lr: 1.0e-3               # Adam (paper)
+  batch_size: 32           # (paper)
+  epochs: 50               # (paper)
+  patience: 10
+  folds: 5
+  seeds: [0]
+
+synthetic:
+  n_subjects: 40
+  per_subject: 8
+  dims: {fm1: 256, fm2: 384}   # smaller features for the CPU smoke test
